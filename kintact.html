@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Kintact — Storyhouse Prototype</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#FAF7F2',
+            'cream-soft': '#F4EFE6',
+            'cream-deep': '#EFE6D6',
+            terracotta: '#C4784A',
+            'terracotta-deep': '#A8633A',
+            'terracotta-soft': '#E8C9AE',
+            'terracotta-tint': '#F3E2D1',
+            sage: '#8B9E7E',
+            'sage-soft': '#C5D1B8',
+            'sage-tint': '#E3EADB',
+            ink: '#2D2A26',
+            'ink-soft': '#5C544C',
+            mute: '#8A847D',
+            'mute-light': '#B5ADA3',
+            hairline: '#EDE8E1',
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+          boxShadow: {
+            warm: '0 2px 8px -2px rgba(196,120,74,0.08), 0 8px 24px -12px rgba(45,42,38,0.10)',
+            'warm-lg': '0 4px 14px -4px rgba(196,120,74,0.16), 0 16px 40px -16px rgba(45,42,38,0.18)',
+            photo: '0 6px 18px -8px rgba(45,42,38,0.20), 0 2px 4px -2px rgba(45,42,38,0.08)',
+            fab: '0 8px 22px -6px rgba(196,120,74,0.45), 0 4px 10px -2px rgba(45,42,38,0.18)',
+          },
+          letterSpacing: { tightish: '-0.012em' },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    html, body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background:
+        radial-gradient(1400px 800px at 18% 0%, #f6efe2 0%, transparent 60%),
+        radial-gradient(1100px 800px at 100% 100%, #e9dec8 0%, transparent 55%),
+        #e6dbc5;
+    }
+
+    /* ===== iPhone Device Frame ===== */
+    .device-wrap {
+      transform-origin: center center;
+    }
+    .device {
+      width: 410px;
+      height: 838px;
+      background:
+        linear-gradient(135deg, #2a2a2c 0%, #1a1a1c 30%, #0d0d0e 70%, #1a1a1c 100%);
+      border-radius: 56px;
+      padding: 11px;
+      position: relative;
+      box-shadow:
+        0 1px 0 1.5px rgba(255,255,255,0.06) inset,
+        0 -1px 0 1.5px rgba(255,255,255,0.04) inset,
+        0 30px 80px -24px rgba(0,0,0,0.55),
+        0 12px 24px -12px rgba(0,0,0,0.4);
+    }
+    /* Subtle inner highlight ring (titanium edge) */
+    .device::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #3a3a3c, #1a1a1c 30%, #0d0d0e 70%, #2a2a2c);
+      pointer-events: none;
+    }
+    /* Side buttons */
+    .btn-side {
+      position: absolute;
+      background: linear-gradient(90deg, #1a1a1c, #2a2a2c 50%, #1a1a1c);
+      box-shadow: inset 0 0 1px rgba(255,255,255,0.08);
+      z-index: 2;
+    }
+    .btn-silent { left: -3px; top: 120px; width: 4px; height: 30px; border-radius: 2px 0 0 2px; }
+    .btn-vol-up { left: -3px; top: 178px; width: 4px; height: 56px; border-radius: 2px 0 0 2px; }
+    .btn-vol-dn { left: -3px; top: 246px; width: 4px; height: 56px; border-radius: 2px 0 0 2px; }
+    .btn-power  { right: -3px; top: 196px; width: 4px; height: 92px; border-radius: 0 2px 2px 0; }
+
+    /* ===== Screen ===== */
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #FAF7F2;
+      border-radius: 46px;
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    /* Dynamic Island */
+    .island {
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 118px;
+      height: 35px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 50;
+      box-shadow: 0 0 0 0.5px rgba(255,255,255,0.05);
+    }
+
+    /* ===== View system ===== */
+    .view {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+    .view.active { display: block; }
+
+    .scroller {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .scroller::-webkit-scrollbar { display: none; }
+    .scroller { -ms-overflow-style: none; scrollbar-width: none; }
+    .scroll-hidden::-webkit-scrollbar { display: none; }
+    .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* ===== iOS status bar ===== */
+    .status-bar {
+      position: relative;
+      height: 54px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 15px;
+      font-weight: 600;
+      color: #2D2A26;
+      padding-top: 12px;
+    }
+
+    /* ===== Photo treatment ===== */
+    .photo-warm { position: relative; overflow: hidden; }
+    .photo-warm::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(196,120,74,0.04), rgba(139,158,126,0.02));
+      pointer-events: none;
+    }
+
+    /* ===== Avatar gradients ===== */
+    .av-1 { background: linear-gradient(135deg, #d59870, #c4784a); }
+    .av-2 { background: linear-gradient(135deg, #a3b58f, #7d9070); }
+    .av-3 { background: linear-gradient(135deg, #e0b384, #c69466); }
+    .av-4 { background: linear-gradient(135deg, #b39780, #8e7660); }
+    .av-5 { background: linear-gradient(135deg, #cba889, #a5876a); }
+
+    /* ===== Photo placeholders ===== */
+    .ph-dinner {
+      background:
+        radial-gradient(120px 80px at 30% 40%, #e8b985 0%, transparent 70%),
+        radial-gradient(140px 90px at 70% 60%, #c97f56 0%, transparent 70%),
+        radial-gradient(60px 60px at 80% 30%, #f1d4a8 0%, transparent 70%),
+        linear-gradient(135deg, #b35e3a 0%, #d18b5c 100%);
+    }
+    .ph-table {
+      background:
+        radial-gradient(80px 60px at 25% 35%, #efd5b4 0%, transparent 75%),
+        radial-gradient(100px 70px at 75% 65%, #b86c43 0%, transparent 75%),
+        linear-gradient(140deg, #d29b6d, #a26244);
+    }
+    .ph-sunset { background: linear-gradient(180deg, #f3c391 0%, #d97b56 45%, #8b5b4b 70%, #3e3a3a 100%); }
+    .ph-cook {
+      background:
+        radial-gradient(100px 70px at 50% 55%, #f0d9a8 0%, transparent 75%),
+        radial-gradient(160px 100px at 50% 65%, #c89469 0%, transparent 75%),
+        linear-gradient(160deg, #d3a06d, #8a5a3b);
+    }
+    .ph-baby {
+      background:
+        radial-gradient(140px 100px at 50% 70%, #f0d9bb 0%, transparent 75%),
+        linear-gradient(160deg, #c5d1b8, #8b9e7e);
+    }
+    .ph-garden {
+      background:
+        radial-gradient(180px 120px at 50% 60%, #a8b896 0%, transparent 75%),
+        linear-gradient(160deg, #e3eadb, #8b9e7e);
+    }
+    .ph-thanks {
+      background:
+        radial-gradient(120px 80px at 30% 50%, #e6a778 0%, transparent 75%),
+        radial-gradient(80px 60px at 70% 40%, #b46640 0%, transparent 75%),
+        linear-gradient(150deg, #9a4f2e, #d68d5c);
+    }
+    .ph-beach { background: linear-gradient(180deg, #f4d5a8 0%, #e5b387 35%, #7d9eb1 65%, #4a6a7a 100%); }
+
+    /* ===== Animations ===== */
+    @keyframes softPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+    .pulse-soft { animation: softPulse 2.6s ease-in-out infinite; }
+
+    @keyframes warmGlow {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(196,120,74,0.18), 0 6px 24px -8px rgba(196,120,74,0.28), 0 2px 8px -2px rgba(196,120,74,0.10); }
+      50% { box-shadow: 0 0 0 1px rgba(196,120,74,0.30), 0 10px 36px -10px rgba(196,120,74,0.42), 0 4px 14px -4px rgba(196,120,74,0.18); }
+    }
+    .glow-pulse { animation: warmGlow 4.2s ease-in-out infinite; }
+
+    @keyframes breathe {
+      0%, 100% { transform: scaleY(0.5); opacity: 0.55; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    .wave-bar { transform-origin: center; animation: breathe 1.8s ease-in-out infinite; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { opacity: 0; }
+    .fade-in.in { animation: fadeUp 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+
+    @keyframes cascade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .cascade > * { opacity: 0; animation: cascade 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+    .cascade > *:nth-child(1) { animation-delay: 0.05s; }
+    .cascade > *:nth-child(2) { animation-delay: 0.18s; }
+    .cascade > *:nth-child(3) { animation-delay: 0.31s; }
+    .cascade > *:nth-child(4) { animation-delay: 0.44s; }
+    .cascade > *:nth-child(5) { animation-delay: 0.57s; }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .sheet-in { animation: slideUp 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+    @keyframes fadeBackdrop { from { opacity: 0; } to { opacity: 1; } }
+    .backdrop-in { animation: fadeBackdrop 0.28s ease forwards; }
+
+    .tap { transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.18s ease; }
+    .tap:hover { transform: translateY(-1px); }
+    .tap:active { transform: scale(0.98); }
+
+    .thread-line {
+      background: linear-gradient(180deg, transparent 0%, #E8C9AE 8%, #C5D1B8 50%, #E8C9AE 92%, transparent 100%);
+    }
+
+    .dashed-warm {
+      background-image:
+        repeating-linear-gradient(90deg, #E8C9AE 0 8px, transparent 8px 16px),
+        repeating-linear-gradient(0deg, #E8C9AE 0 8px, transparent 8px 16px),
+        repeating-linear-gradient(90deg, #E8C9AE 0 8px, transparent 8px 16px),
+        repeating-linear-gradient(0deg, #E8C9AE 0 8px, transparent 8px 16px);
+      background-size: 100% 1.5px, 1.5px 100%, 100% 1.5px, 1.5px 100%;
+      background-position: 0 0, 0 0, 0 100%, 100% 0;
+      background-repeat: no-repeat;
+    }
+
+    /* Battery icon */
+    .battery {
+      width: 25px;
+      height: 12px;
+      border: 1.2px solid #2D2A26;
+      border-radius: 3px;
+      position: relative;
+      padding: 1px;
+    }
+    .battery::after {
+      content: '';
+      position: absolute;
+      right: -3px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.5px;
+      height: 5px;
+      background: #2D2A26;
+      border-radius: 0 1.5px 1.5px 0;
+    }
+    .battery > span {
+      display: block;
+      height: 100%;
+      width: 80%;
+      background: #2D2A26;
+      border-radius: 1px;
+    }
+  </style>
+</head>
+
+<body class="text-ink">
+  <!-- ============================================================
+       Stage — viewport-locked, no scroll outside the device
+  ============================================================ -->
+  <div class="w-screen h-screen flex items-center justify-center">
+
+    <div id="device-wrap" class="device-wrap">
+      <div class="device">
+
+        <!-- Side hardware buttons -->
+        <span class="btn-side btn-silent"></span>
+        <span class="btn-side btn-vol-up"></span>
+        <span class="btn-side btn-vol-dn"></span>
+        <span class="btn-side btn-power"></span>
+
+        <!-- ============================================================
+             SCREEN (the part that's clickable / scrollable)
+        ============================================================ -->
+        <div class="screen">
+
+          <!-- Dynamic Island (always visible) -->
+          <div class="island"></div>
+
+          <!-- ============================================================
+               VIEW: FEED
+          ============================================================ -->
+          <section id="view-feed" class="view active">
+
+            <div class="scroller">
+
+              <!-- Sticky header with status bar baked in -->
+              <header class="sticky top-0 z-30 bg-cream/85 backdrop-blur-md border-b border-hairline/60">
+
+                <!-- iOS status bar -->
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg width="18" height="11" viewBox="0 0 18 11" fill="none">
+                      <rect x="0" y="7" width="3" height="4" rx="0.5" fill="#2D2A26"/>
+                      <rect x="5" y="5" width="3" height="6" rx="0.5" fill="#2D2A26"/>
+                      <rect x="10" y="2.5" width="3" height="8.5" rx="0.5" fill="#2D2A26"/>
+                      <rect x="15" y="0" width="3" height="11" rx="0.5" fill="#2D2A26"/>
+                    </svg>
+                    <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                      <path d="M8 2.5a8 8 0 0 1 5.5 2.2l-1.4 1.4a6 6 0 0 0-8.2 0L2.5 4.7A8 8 0 0 1 8 2.5Z" fill="#2D2A26"/>
+                      <path d="M8 5.5a5 5 0 0 1 3.4 1.4l-1.4 1.4a3 3 0 0 0-4 0L4.6 6.9A5 5 0 0 1 8 5.5Z" fill="#2D2A26"/>
+                      <circle cx="8" cy="9" r="1.3" fill="#2D2A26"/>
+                    </svg>
+                    <span class="battery"><span></span></span>
+                  </span>
+                </div>
+
+                <!-- App nav -->
+                <div class="px-5 pt-1 pb-4 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] uppercase tracking-[0.18em] text-mute font-medium">The Pierce family</p>
+                    <h1 class="text-[26px] leading-tight font-semibold tracking-tightish mt-0.5">Storyhouse</h1>
+                  </div>
+                  <div class="flex -space-x-2">
+                    <div class="av-1 w-9 h-9 rounded-full ring-2 ring-cream flex items-center justify-center text-white text-[12px] font-semibold">M</div>
+                    <div class="av-2 w-9 h-9 rounded-full ring-2 ring-cream flex items-center justify-center text-white text-[12px] font-semibold">D</div>
+                    <div class="av-3 w-9 h-9 rounded-full ring-2 ring-cream flex items-center justify-center text-white text-[12px] font-semibold">G</div>
+                    <div class="av-4 w-9 h-9 rounded-full ring-2 ring-cream flex items-center justify-center text-white text-[12px] font-semibold">J</div>
+                    <div class="w-9 h-9 rounded-full ring-2 ring-cream bg-cream-soft flex items-center justify-center text-mute text-[11px] font-semibold">+3</div>
+                  </div>
+                </div>
+              </header>
+
+              <!-- Feed content -->
+              <div class="px-5 pt-4 pb-36 space-y-5">
+
+                <!-- Nudge -->
+                <div id="nudge" class="fade-in relative rounded-3xl p-4 pr-12"
+                  style="background: linear-gradient(135deg, rgba(232,201,174,0.55), rgba(227,234,219,0.55)); border: 1px solid rgba(196,120,74,0.18);">
+                  <button onclick="dismissNudge()" class="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/60 hover:bg-white text-mute hover:text-ink flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+                  <div class="flex items-start gap-3">
+                    <div class="shrink-0 w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-terracotta">
+                      <i data-lucide="sparkles" class="w-[18px] h-[18px]"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-[14.5px] leading-snug text-ink font-medium">Dad hasn't shared in a while.</p>
+                      <p class="text-[13px] leading-relaxed text-ink-soft mt-0.5">Want to send a photo his way? He'd love that.</p>
+                      <button class="mt-2.5 text-[13px] font-semibold text-terracotta-deep hover:text-terracotta inline-flex items-center gap-1.5">
+                        Send a hello
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 1 - clickable to detail -->
+                <article class="fade-in tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer" onclick="openDetail()">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5">
+                      <div class="av-1 w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-semibold">M</div>
+                      <div class="leading-tight">
+                        <p class="text-[14px] font-semibold text-ink">Mom</p>
+                        <p class="text-[12px] text-mute">3 days ago</p>
+                      </div>
+                    </div>
+                    <button onclick="event.stopPropagation()" class="text-mute hover:text-ink-soft transition-colors p-1 -mr-1">
+                      <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                    </button>
+                  </div>
+                  <div class="photo-warm ph-dinner rounded-2xl aspect-[4/5] shadow-photo mb-3.5"></div>
+                  <p class="text-[15px] leading-relaxed text-ink-soft mb-3.5 px-0.5">
+                    Sunday dinner, everyone home for the weekend. Roast, garden tomatoes, and Dad's terrible jokes — all the essentials.
+                  </p>
+                  <div class="flex items-center justify-between pt-3 border-t border-hairline">
+                    <div class="flex items-center gap-2.5">
+                      <div class="flex -space-x-1.5">
+                        <div class="av-2 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">D</div>
+                        <div class="av-3 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">G</div>
+                        <div class="av-4 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">J</div>
+                        <div class="av-5 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">S</div>
+                      </div>
+                      <p class="text-[12.5px] text-ink-soft"><span class="font-medium">4 family members</span> added to this</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                  </div>
+                </article>
+
+                <!-- Resurfaced 1 -->
+                <article class="fade-in glow-pulse tap relative rounded-3xl p-4 cursor-pointer overflow-hidden"
+                  style="background: linear-gradient(150deg, #FBEFE0, #F7E5D2); border: 1px solid rgba(196,120,74,0.16);">
+                  <div class="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/70 backdrop-blur text-[11px] font-semibold text-terracotta-deep">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i>
+                    On this day
+                  </div>
+                  <p class="text-[11px] uppercase tracking-[0.16em] text-terracotta-deep font-semibold mb-2.5">2 years ago today</p>
+                  <div class="flex gap-3.5">
+                    <div class="photo-warm ph-thanks shrink-0 w-24 h-24 rounded-2xl shadow-photo"></div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[15px] font-semibold leading-tight text-ink mb-1">Thanksgiving at Grandma's</p>
+                      <p class="text-[13px] leading-snug text-ink-soft line-clamp-2">The whole family squeezed around the table. Aunt Lin brought her famous pies.</p>
+                      <button class="mt-2.5 text-[13px] font-semibold text-terracotta-deep hover:text-terracotta inline-flex items-center gap-1.5">
+                        Add to this memory
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Card 2 -->
+                <article class="fade-in tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5">
+                      <div class="av-2 w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-semibold">D</div>
+                      <div class="leading-tight">
+                        <p class="text-[14px] font-semibold text-ink">Dad</p>
+                        <p class="text-[12px] text-mute">Last Sunday</p>
+                      </div>
+                    </div>
+                    <button onclick="event.stopPropagation()" class="text-mute hover:text-ink-soft transition-colors p-1 -mr-1"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                  </div>
+                  <div class="photo-warm ph-sunset rounded-2xl aspect-[4/3] shadow-photo mb-3.5"></div>
+                  <p class="text-[15px] leading-relaxed text-ink-soft mb-3.5 px-0.5">
+                    Caught the perfect sky at the cabin. Made me think of all the summers we used to spend up here.
+                  </p>
+                  <div class="flex items-center justify-between pt-3 border-t border-hairline">
+                    <div class="flex items-center gap-2.5">
+                      <div class="flex -space-x-1.5">
+                        <div class="av-1 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">M</div>
+                        <div class="av-3 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">G</div>
+                      </div>
+                      <p class="text-[12.5px] text-ink-soft"><span class="font-medium">2 family members</span> added to this</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                  </div>
+                </article>
+
+                <!-- Card 3 -->
+                <article class="fade-in tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5">
+                      <div class="av-3 w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-semibold">G</div>
+                      <div class="leading-tight">
+                        <p class="text-[14px] font-semibold text-ink">Grandma Ruth</p>
+                        <p class="text-[12px] text-mute">5 days ago</p>
+                      </div>
+                    </div>
+                    <button onclick="event.stopPropagation()" class="text-mute hover:text-ink-soft transition-colors p-1 -mr-1"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                  </div>
+                  <div class="photo-warm ph-cook rounded-2xl aspect-square shadow-photo mb-3.5"></div>
+                  <p class="text-[15px] leading-relaxed text-ink-soft mb-3.5 px-0.5">
+                    Finally wrote down the apple cake recipe everyone keeps asking for. It's in the family book now — page 14.
+                  </p>
+                  <div class="flex items-center justify-between pt-3 border-t border-hairline">
+                    <div class="flex items-center gap-2.5">
+                      <div class="flex -space-x-1.5">
+                        <div class="av-1 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">M</div>
+                        <div class="av-4 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">J</div>
+                        <div class="av-5 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">S</div>
+                      </div>
+                      <p class="text-[12.5px] text-ink-soft"><span class="font-medium">3 family members</span> added to this</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                  </div>
+                </article>
+
+                <!-- Resurfaced 2 -->
+                <article class="fade-in glow-pulse tap relative rounded-3xl p-4 cursor-pointer"
+                  style="background: linear-gradient(150deg, #F0EBE0, #E8E2D2); border: 1px solid rgba(139,158,126,0.20);">
+                  <div class="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/70 backdrop-blur text-[11px] font-semibold" style="color:#6F8267;">
+                    <i data-lucide="heart" class="w-3 h-3"></i>
+                    Remember this?
+                  </div>
+                  <p class="text-[11px] uppercase tracking-[0.16em] font-semibold mb-2.5" style="color:#6F8267;">A summer at the lake</p>
+                  <div class="flex gap-3.5">
+                    <div class="photo-warm ph-beach shrink-0 w-24 h-24 rounded-2xl shadow-photo"></div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[15px] font-semibold leading-tight text-ink mb-1">The 4th of July boat trip</p>
+                      <p class="text-[13px] leading-snug text-ink-soft line-clamp-2">Dad's "shortcut" turned into a three-hour detour. Nobody complained.</p>
+                      <button class="mt-2.5 text-[13px] font-semibold inline-flex items-center gap-1.5" style="color:#6F8267;">
+                        Revisit
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Card 4 -->
+                <article class="fade-in tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5">
+                      <div class="av-4 w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-semibold">J</div>
+                      <div class="leading-tight">
+                        <p class="text-[14px] font-semibold text-ink">Jamie</p>
+                        <p class="text-[12px] text-mute">A week ago</p>
+                      </div>
+                    </div>
+                    <button onclick="event.stopPropagation()" class="text-mute hover:text-ink-soft transition-colors p-1 -mr-1"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                  </div>
+                  <div class="photo-warm ph-baby rounded-2xl aspect-[4/3] shadow-photo mb-3.5"></div>
+                  <p class="text-[15px] leading-relaxed text-ink-soft mb-3.5 px-0.5">
+                    She did it! First real steps across the living room. Three in a row before she sat down laughing.
+                  </p>
+                  <div class="flex items-center justify-between pt-3 border-t border-hairline">
+                    <div class="flex items-center gap-2.5">
+                      <div class="flex -space-x-1.5">
+                        <div class="av-1 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">M</div>
+                        <div class="av-2 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">D</div>
+                        <div class="av-3 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">G</div>
+                        <div class="av-5 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">S</div>
+                        <div class="w-6 h-6 rounded-full ring-2 ring-white bg-cream-soft flex items-center justify-center text-mute text-[9px] font-semibold">+1</div>
+                      </div>
+                      <p class="text-[12.5px] text-ink-soft"><span class="font-medium">6 family members</span> added to this</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                  </div>
+                </article>
+
+                <p class="text-center text-[12px] text-mute pt-2 pb-1">
+                  You've reached the beginning of your family's story.
+                </p>
+              </div>
+            </div>
+
+            <!-- FAB -->
+            <button onclick="openAddSheet()" aria-label="Add a memory"
+              class="absolute right-5 bottom-[92px] w-14 h-14 rounded-full bg-terracotta text-white shadow-fab flex items-center justify-center hover:bg-terracotta-deep active:scale-95 transition-all duration-150 z-40">
+              <i data-lucide="plus" class="w-6 h-6" stroke-width="2.25"></i>
+            </button>
+
+            <!-- Bottom Tab Bar -->
+            <nav class="absolute left-0 right-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-hairline px-2 pt-2 pb-4 z-30">
+              <div class="flex items-stretch justify-around">
+                <button onclick="showView('home')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="house" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Home</span>
+                </button>
+                <button class="relative flex flex-col items-center gap-1 px-3 py-1.5 text-terracotta">
+                  <i data-lucide="book-heart" class="w-[22px] h-[22px]" stroke-width="2"></i>
+                  <span class="text-[10.5px] font-semibold">Storyhouse</span>
+                  <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-terracotta pulse-soft"></span>
+                </button>
+                <button onclick="showView('events')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="calendar-days" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Events</span>
+                </button>
+                <button onclick="showView('chat')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="message-circle" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Chat</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="user-round" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Profile</span>
+                </button>
+              </div>
+              <!-- Home indicator -->
+              <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-[100px] h-[4px] rounded-full bg-ink/30"></div>
+            </nav>
+          </section>
+
+          <!-- ============================================================
+               VIEW: DETAIL
+          ============================================================ -->
+          <section id="view-detail" class="view">
+            <div class="scroller">
+
+              <header class="sticky top-0 z-30 bg-cream/85 backdrop-blur-md border-b border-hairline/60">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg width="18" height="11" viewBox="0 0 18 11" fill="none">
+                      <rect x="0" y="7" width="3" height="4" rx="0.5" fill="#2D2A26"/>
+                      <rect x="5" y="5" width="3" height="6" rx="0.5" fill="#2D2A26"/>
+                      <rect x="10" y="2.5" width="3" height="8.5" rx="0.5" fill="#2D2A26"/>
+                      <rect x="15" y="0" width="3" height="11" rx="0.5" fill="#2D2A26"/>
+                    </svg>
+                    <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+                      <path d="M8 2.5a8 8 0 0 1 5.5 2.2l-1.4 1.4a6 6 0 0 0-8.2 0L2.5 4.7A8 8 0 0 1 8 2.5Z" fill="#2D2A26"/>
+                      <path d="M8 5.5a5 5 0 0 1 3.4 1.4l-1.4 1.4a3 3 0 0 0-4 0L4.6 6.9A5 5 0 0 1 8 5.5Z" fill="#2D2A26"/>
+                      <circle cx="8" cy="9" r="1.3" fill="#2D2A26"/>
+                    </svg>
+                    <span class="battery"><span></span></span>
+                  </span>
+                </div>
+                <div class="px-5 pt-1 pb-3 flex items-center justify-between">
+                  <button onclick="closeDetail()" class="w-9 h-9 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center transition-colors shadow-warm">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                  </button>
+                  <p class="text-[12px] uppercase tracking-[0.18em] text-mute font-medium">A memory</p>
+                  <button class="w-9 h-9 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center transition-colors shadow-warm">
+                    <i data-lucide="bookmark" class="w-[18px] h-[18px]"></i>
+                  </button>
+                </div>
+              </header>
+
+              <div class="px-5 pt-5 pb-32 cascade">
+                <!-- Original -->
+                <div>
+                  <div class="flex items-center gap-2.5 mb-3">
+                    <div class="av-1 w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-semibold">M</div>
+                    <div class="leading-tight">
+                      <p class="text-[14.5px] font-semibold text-ink">Mom</p>
+                      <p class="text-[12px] text-mute">Shared 3 days ago · Sunday afternoon</p>
+                    </div>
+                  </div>
+                  <div class="photo-warm ph-dinner rounded-2xl aspect-[4/5] shadow-photo mb-4"></div>
+                  <h2 class="text-[20px] font-semibold leading-snug text-ink mb-2 tracking-tightish">Sunday dinner, everyone home</h2>
+                  <p class="text-[15.5px] leading-relaxed text-ink-soft">
+                    Roast, garden tomatoes, and Dad's terrible jokes — all the essentials. We were six around the table and somehow it still felt like there was room for one more.
+                  </p>
+                </div>
+
+                <!-- Thread -->
+                <div class="mt-7 relative">
+                  <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold mb-4">Continued by family · 4 additions</p>
+                  <div class="thread-line absolute left-[19px] top-12 bottom-12 w-[2px] rounded-full"></div>
+
+                  <div class="space-y-5">
+
+                    <div class="relative flex gap-3.5">
+                      <div class="av-2 shrink-0 w-10 h-10 rounded-full ring-4 ring-cream flex items-center justify-center text-white text-[13px] font-semibold relative z-10">D</div>
+                      <div class="flex-1 min-w-0 pt-0.5">
+                        <div class="flex items-baseline gap-2 mb-1.5">
+                          <p class="text-[13.5px] font-semibold text-ink">Dad</p>
+                          <p class="text-[11.5px] text-mute">6 hours later</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-warm p-3">
+                          <div class="photo-warm ph-table rounded-xl aspect-[4/3] mb-2.5"></div>
+                          <p class="text-[13.5px] leading-relaxed text-ink-soft">Couldn't resist getting one of the table before everyone sat down.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="relative flex gap-3.5">
+                      <div class="av-3 shrink-0 w-10 h-10 rounded-full ring-4 ring-cream flex items-center justify-center text-white text-[13px] font-semibold relative z-10">G</div>
+                      <div class="flex-1 min-w-0 pt-0.5">
+                        <div class="flex items-baseline gap-2 mb-1.5">
+                          <p class="text-[13.5px] font-semibold text-ink">Grandma Ruth</p>
+                          <p class="text-[11.5px] text-mute">Yesterday morning</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-warm p-3.5">
+                          <div class="flex items-center gap-3">
+                            <button class="shrink-0 w-11 h-11 rounded-full bg-terracotta text-white flex items-center justify-center shadow-warm hover:bg-terracotta-deep transition-colors">
+                              <i data-lucide="play" class="w-[18px] h-[18px]" fill="currentColor"></i>
+                            </button>
+                            <div class="flex-1 flex items-center gap-[3px] h-9">
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:30%; animation-delay:0s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:55%; animation-delay:0.1s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:80%; animation-delay:0.2s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:65%; animation-delay:0.3s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:90%; animation-delay:0.4s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:50%; animation-delay:0.5s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:75%; animation-delay:0.6s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:60%; animation-delay:0.7s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:85%; animation-delay:0.8s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:45%; animation-delay:0.9s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:70%; animation-delay:1.0s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:55%; animation-delay:1.1s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:80%; animation-delay:1.2s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:35%; animation-delay:1.3s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:60%; animation-delay:1.4s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:75%; animation-delay:1.5s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:50%; animation-delay:1.6s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:40%; animation-delay:1.7s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:65%; animation-delay:1.8s;"></div>
+                              <div class="wave-bar w-[3px] rounded-full bg-terracotta-soft" style="height:30%; animation-delay:1.9s;"></div>
+                            </div>
+                            <p class="text-[11.5px] font-mono text-mute">0:42</p>
+                          </div>
+                          <p class="text-[13px] leading-relaxed text-ink-soft mt-3">A little note for everyone. I keep thinking about the way the kitchen smelled.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="relative flex gap-3.5">
+                      <div class="av-4 shrink-0 w-10 h-10 rounded-full ring-4 ring-cream flex items-center justify-center text-white text-[13px] font-semibold relative z-10">J</div>
+                      <div class="flex-1 min-w-0 pt-0.5">
+                        <div class="flex items-baseline gap-2 mb-1.5">
+                          <p class="text-[13.5px] font-semibold text-ink">Jamie</p>
+                          <p class="text-[11.5px] text-mute">3 days later</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-warm p-4">
+                          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-sage-tint text-[11px] font-semibold mb-2.5" style="color:#6F8267;">
+                            <i data-lucide="feather" class="w-3 h-3"></i>
+                            Short story · 2 min
+                          </div>
+                          <p class="text-[14px] leading-relaxed text-ink-soft italic">
+                            "I keep thinking about Mason and that napkin trick. He's been doing it since he was four, and somehow it still makes Dad laugh harder every year. Some things just don't lose their shape over time…"
+                          </p>
+                          <button class="mt-2.5 text-[12.5px] font-semibold text-terracotta-deep hover:text-terracotta inline-flex items-center gap-1.5">
+                            Read the rest
+                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="relative flex gap-3.5">
+                      <div class="av-5 shrink-0 w-10 h-10 rounded-full ring-4 ring-cream flex items-center justify-center text-white text-[13px] font-semibold relative z-10">S</div>
+                      <div class="flex-1 min-w-0 pt-0.5">
+                        <div class="flex items-baseline gap-2 mb-1.5">
+                          <p class="text-[13.5px] font-semibold text-ink">Sam</p>
+                          <p class="text-[11.5px] text-mute">A week later</p>
+                        </div>
+                        <div class="bg-cream-soft rounded-2xl px-4 py-3">
+                          <p class="text-[14px] leading-relaxed text-ink-soft">
+                            Already missing this. Can we do it again before the leaves drop?
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <!-- Add to memory -->
+                <div class="mt-8">
+                  <button onclick="openAddSheet()" class="tap w-full rounded-2xl bg-terracotta text-white py-4 flex items-center justify-center gap-2 font-semibold text-[15px] shadow-fab hover:bg-terracotta-deep">
+                    <i data-lucide="plus" class="w-[18px] h-[18px]" stroke-width="2.25"></i>
+                    Add your piece
+                  </button>
+                  <p class="text-center text-[12px] text-mute mt-2.5">A photo, a voice note, or just a thought.</p>
+                </div>
+
+                <!-- Connected -->
+                <div class="mt-9">
+                  <div class="flex items-baseline justify-between mb-3">
+                    <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold">Connected memories</p>
+                    <button class="text-[11.5px] font-semibold text-terracotta-deep">See all</button>
+                  </div>
+                  <div class="flex gap-3 overflow-x-auto scroll-hidden -mx-5 px-5 pb-2">
+                    <div class="tap shrink-0 w-44 bg-white rounded-2xl shadow-warm overflow-hidden cursor-pointer">
+                      <div class="photo-warm ph-thanks h-24"></div>
+                      <div class="p-3">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">Thanksgiving 2022</p>
+                        <p class="text-[11.5px] text-mute mt-0.5">8 family members · 12 pieces</p>
+                      </div>
+                    </div>
+                    <div class="tap shrink-0 w-44 bg-white rounded-2xl shadow-warm overflow-hidden cursor-pointer">
+                      <div class="photo-warm ph-cook h-24"></div>
+                      <div class="p-3">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">Grandma's recipes</p>
+                        <p class="text-[11.5px] text-mute mt-0.5">5 family members · 18 pieces</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Tab Bar (same shape) -->
+            <nav class="absolute left-0 right-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-hairline px-2 pt-2 pb-4 z-30">
+              <div class="flex items-stretch justify-around">
+                <button onclick="showView('home')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute"><i data-lucide="house" class="w-[22px] h-[22px]" stroke-width="1.75"></i><span class="text-[10.5px] font-medium">Home</span></button>
+                <button class="relative flex flex-col items-center gap-1 px-3 py-1.5 text-terracotta">
+                  <i data-lucide="book-heart" class="w-[22px] h-[22px]" stroke-width="2"></i>
+                  <span class="text-[10.5px] font-semibold">Storyhouse</span>
+                  <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-terracotta pulse-soft"></span>
+                </button>
+                <button onclick="showView('events')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute"><i data-lucide="calendar-days" class="w-[22px] h-[22px]" stroke-width="1.75"></i><span class="text-[10.5px] font-medium">Events</span></button>
+                <button onclick="showView('chat')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute"><i data-lucide="message-circle" class="w-[22px] h-[22px]" stroke-width="1.75"></i><span class="text-[10.5px] font-medium">Chat</span></button>
+                <button class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute"><i data-lucide="user-round" class="w-[22px] h-[22px]" stroke-width="1.75"></i><span class="text-[10.5px] font-medium">Profile</span></button>
+              </div>
+              <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-[100px] h-[4px] rounded-full bg-ink/30"></div>
+            </nav>
+          </section>
+
+          <!-- ============================================================
+               VIEW: HOME
+          ============================================================ -->
+          <section id="view-home" class="view">
+            <div class="scroller">
+
+              <header class="sticky top-0 z-30 bg-cream/85 backdrop-blur-md border-b border-hairline/60">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.5" fill="#2D2A26"/><rect x="5" y="5" width="3" height="6" rx="0.5" fill="#2D2A26"/><rect x="10" y="2.5" width="3" height="8.5" rx="0.5" fill="#2D2A26"/><rect x="15" y="0" width="3" height="11" rx="0.5" fill="#2D2A26"/></svg>
+                    <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2.5a8 8 0 0 1 5.5 2.2l-1.4 1.4a6 6 0 0 0-8.2 0L2.5 4.7A8 8 0 0 1 8 2.5Z" fill="#2D2A26"/><path d="M8 5.5a5 5 0 0 1 3.4 1.4l-1.4 1.4a3 3 0 0 0-4 0L4.6 6.9A5 5 0 0 1 8 5.5Z" fill="#2D2A26"/><circle cx="8" cy="9" r="1.3" fill="#2D2A26"/></svg>
+                    <span class="battery"><span></span></span>
+                  </span>
+                </div>
+                <div class="px-5 pt-1 pb-4">
+                  <p class="text-[11px] uppercase tracking-[0.18em] text-mute font-medium">Sunday · May 14</p>
+                  <h1 class="text-[26px] leading-tight font-semibold tracking-tightish mt-0.5">Good morning, Sam</h1>
+                  <p class="text-[13.5px] text-ink-soft mt-1.5">Three people are awake. It's quiet over Cork.</p>
+                </div>
+              </header>
+
+              <div class="px-5 pt-5 pb-32 space-y-7">
+
+                <!-- Family presence -->
+                <section class="fade-in">
+                  <div class="flex items-baseline justify-between mb-3">
+                    <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold">The family right now</p>
+                    <p class="text-[11.5px] text-mute">3 awake · 2 asleep</p>
+                  </div>
+                  <div class="flex gap-3 overflow-x-auto scroll-hidden -mx-5 px-5 pb-1">
+                    <!-- Mom - asleep -->
+                    <div class="shrink-0 w-[120px] bg-white rounded-2xl shadow-warm p-3.5">
+                      <div class="relative w-11 h-11 mb-2.5">
+                        <div class="av-1 w-11 h-11 rounded-full flex items-center justify-center text-white text-[14px] font-semibold">M</div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                          <span class="w-2 h-2 rounded-full bg-mute-light"></span>
+                        </span>
+                      </div>
+                      <p class="text-[13.5px] font-semibold text-ink leading-tight">Mom</p>
+                      <p class="text-[10.5px] text-mute mt-0.5">Seattle</p>
+                      <div class="flex items-baseline gap-1 mt-2">
+                        <p class="text-[16px] font-semibold text-ink tracking-tightish leading-none">6:42</p>
+                        <p class="text-[10.5px] text-mute font-semibold">AM</p>
+                      </div>
+                      <p class="text-[10.5px] text-mute-light mt-1 inline-flex items-center gap-1">
+                        <i data-lucide="moon" class="w-3 h-3"></i>
+                        asleep
+                      </p>
+                    </div>
+
+                    <!-- Dad - morning -->
+                    <div class="shrink-0 w-[120px] bg-white rounded-2xl shadow-warm p-3.5">
+                      <div class="relative w-11 h-11 mb-2.5">
+                        <div class="av-2 w-11 h-11 rounded-full flex items-center justify-center text-white text-[14px] font-semibold">D</div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                          <span class="w-2 h-2 rounded-full" style="background:#8B9E7E;"></span>
+                        </span>
+                      </div>
+                      <p class="text-[13.5px] font-semibold text-ink leading-tight">Dad</p>
+                      <p class="text-[10.5px] text-mute mt-0.5">Boston</p>
+                      <div class="flex items-baseline gap-1 mt-2">
+                        <p class="text-[16px] font-semibold text-ink tracking-tightish leading-none">9:42</p>
+                        <p class="text-[10.5px] text-mute font-semibold">AM</p>
+                      </div>
+                      <p class="text-[10.5px] mt-1 inline-flex items-center gap-1" style="color:#6F8267;">
+                        <i data-lucide="sun" class="w-3 h-3"></i>
+                        morning
+                      </p>
+                    </div>
+
+                    <!-- Grandma - afternoon -->
+                    <div class="shrink-0 w-[120px] bg-white rounded-2xl shadow-warm p-3.5">
+                      <div class="relative w-11 h-11 mb-2.5">
+                        <div class="av-3 w-11 h-11 rounded-full flex items-center justify-center text-white text-[14px] font-semibold">G</div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                          <span class="w-2 h-2 rounded-full bg-terracotta"></span>
+                        </span>
+                      </div>
+                      <p class="text-[13.5px] font-semibold text-ink leading-tight">Grandma</p>
+                      <p class="text-[10.5px] text-mute mt-0.5">Cork, IE</p>
+                      <div class="flex items-baseline gap-1 mt-2">
+                        <p class="text-[16px] font-semibold text-ink tracking-tightish leading-none">2:42</p>
+                        <p class="text-[10.5px] text-mute font-semibold">PM</p>
+                      </div>
+                      <p class="text-[10.5px] text-terracotta-deep mt-1 inline-flex items-center gap-1">
+                        <i data-lucide="sun" class="w-3 h-3"></i>
+                        afternoon
+                      </p>
+                    </div>
+
+                    <!-- Jamie - morning -->
+                    <div class="shrink-0 w-[120px] bg-white rounded-2xl shadow-warm p-3.5">
+                      <div class="relative w-11 h-11 mb-2.5">
+                        <div class="av-4 w-11 h-11 rounded-full flex items-center justify-center text-white text-[14px] font-semibold">J</div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                          <span class="w-2 h-2 rounded-full" style="background:#8B9E7E;"></span>
+                        </span>
+                      </div>
+                      <p class="text-[13.5px] font-semibold text-ink leading-tight">Jamie</p>
+                      <p class="text-[10.5px] text-mute mt-0.5">Austin</p>
+                      <div class="flex items-baseline gap-1 mt-2">
+                        <p class="text-[16px] font-semibold text-ink tracking-tightish leading-none">8:42</p>
+                        <p class="text-[10.5px] text-mute font-semibold">AM</p>
+                      </div>
+                      <p class="text-[10.5px] mt-1 inline-flex items-center gap-1" style="color:#6F8267;">
+                        <i data-lucide="sun" class="w-3 h-3"></i>
+                        morning
+                      </p>
+                    </div>
+
+                    <!-- Sam (you) -->
+                    <div class="shrink-0 w-[120px] rounded-2xl p-3.5" style="background:linear-gradient(150deg,#F3E2D1,#E8C9AE);border:1px solid rgba(196,120,74,0.18);">
+                      <div class="relative w-11 h-11 mb-2.5">
+                        <div class="av-5 w-11 h-11 rounded-full flex items-center justify-center text-white text-[14px] font-semibold">S</div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-cream flex items-center justify-center">
+                          <span class="w-2 h-2 rounded-full" style="background:#8B9E7E;"></span>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">Sam</p>
+                        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/80 text-terracotta-deep">you</span>
+                      </div>
+                      <p class="text-[10.5px] text-mute mt-0.5">New York</p>
+                      <div class="flex items-baseline gap-1 mt-2">
+                        <p class="text-[16px] font-semibold text-ink tracking-tightish leading-none">9:42</p>
+                        <p class="text-[10.5px] text-mute font-semibold">AM</p>
+                      </div>
+                      <p class="text-[10.5px] mt-1 inline-flex items-center gap-1" style="color:#6F8267;">
+                        <i data-lucide="sun" class="w-3 h-3"></i>
+                        morning
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Today's plans -->
+                <section class="fade-in">
+                  <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold mb-3">Today's plans</p>
+                  <article onclick="showView('events')" class="tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer">
+                    <div class="flex items-start gap-3">
+                      <div class="shrink-0 w-12 h-12 rounded-2xl bg-sage-tint flex flex-col items-center justify-center text-[9.5px] font-semibold leading-tight tracking-wider" style="color:#6F8267;">
+                        <span>SUN</span>
+                        <span class="text-[16px] font-bold">14</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[15px] font-semibold text-ink leading-snug">Sunday call with Grandma</p>
+                        <p class="text-[12.5px] text-mute mt-0.5">In 4 hours · 10:00 AM your time</p>
+                        <p class="text-[11.5px] text-mute-light mt-0.5">3 PM for Grandma · 7 AM for Mom</p>
+                        <div class="flex items-center gap-1.5 mt-2.5">
+                          <div class="flex -space-x-1.5">
+                            <div class="av-1 w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[9px] font-semibold">M</div>
+                            <div class="av-2 w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[9px] font-semibold">D</div>
+                            <div class="av-3 w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[9px] font-semibold">G</div>
+                            <div class="av-4 w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[9px] font-semibold">J</div>
+                            <div class="av-5 w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[9px] font-semibold">S</div>
+                          </div>
+                          <p class="text-[11.5px] text-ink-soft"><span class="font-medium">All 5</span> said yes</p>
+                        </div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-mute mt-1"></i>
+                    </div>
+                  </article>
+                </section>
+
+                <!-- Quietly happening -->
+                <section class="fade-in">
+                  <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold mb-3">Quietly happening</p>
+                  <div class="bg-white rounded-3xl shadow-warm divide-y divide-hairline overflow-hidden">
+                    <div onclick="showView('feed')" class="tap p-4 flex items-center gap-3 cursor-pointer">
+                      <div class="av-1 shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-semibold">M</div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[13.5px] text-ink leading-snug"><span class="font-semibold">Mom</span> added a photo to <span class="font-semibold">Sunday dinner</span></p>
+                        <p class="text-[11.5px] text-mute mt-0.5">2 hours ago</p>
+                      </div>
+                      <div class="photo-warm ph-dinner shrink-0 w-10 h-10 rounded-xl"></div>
+                    </div>
+                    <div onclick="showView('chat')" class="tap p-4 flex items-center gap-3 cursor-pointer">
+                      <div class="av-2 shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-semibold">D</div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[13.5px] text-ink leading-snug"><span class="font-semibold">Dad</span> shared 3 photos in the family chat</p>
+                        <p class="text-[11.5px] text-mute mt-0.5">Yesterday · 7:14 PM</p>
+                      </div>
+                      <i data-lucide="image" class="w-4 h-4 text-mute"></i>
+                    </div>
+                    <div onclick="showView('feed')" class="tap p-4 flex items-center gap-3 cursor-pointer">
+                      <div class="av-3 shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-semibold">G</div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[13.5px] text-ink leading-snug"><span class="font-semibold">Grandma</span> started a new memory · <span class="font-semibold">Family recipes</span></p>
+                        <p class="text-[11.5px] text-mute mt-0.5">Last week</p>
+                      </div>
+                      <i data-lucide="book-heart" class="w-4 h-4 text-mute"></i>
+                    </div>
+                    <div onclick="showView('feed')" class="tap p-4 flex items-center gap-3 cursor-pointer">
+                      <div class="av-4 shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-semibold">J</div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[13.5px] text-ink leading-snug"><span class="font-semibold">Jamie</span> joined the <span class="font-semibold">Sunday dinner</span> memory</p>
+                        <p class="text-[11.5px] text-mute mt-0.5">3 days ago</p>
+                      </div>
+                      <i data-lucide="user-plus" class="w-4 h-4 text-mute"></i>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Gentle nudge -->
+                <section class="fade-in">
+                  <div class="relative rounded-3xl p-5 overflow-hidden" style="background: linear-gradient(150deg, #FBEFE0 0%, #F0E2C8 100%); border: 1px solid rgba(196,120,74,0.20);">
+                    <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full" style="background: radial-gradient(circle, rgba(196,120,74,0.16), transparent 70%);"></div>
+                    <div class="flex items-start gap-3 relative">
+                      <div class="shrink-0 w-10 h-10 rounded-2xl bg-white/80 flex items-center justify-center text-terracotta-deep">
+                        <i data-lucide="cake" class="w-5 h-5"></i>
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-[15px] leading-snug text-ink font-semibold">Grandma's 80th is in 9 days.</p>
+                        <p class="text-[13px] leading-relaxed text-ink-soft mt-1">Want to start a memory collection? Everyone can add a note, photo, or voice memo.</p>
+                        <div class="flex items-center gap-2 mt-3">
+                          <button class="tap text-[13px] font-semibold text-white bg-terracotta hover:bg-terracotta-deep px-4 py-2 rounded-full">Start collecting</button>
+                          <button class="text-[13px] font-medium text-ink-soft px-3 py-2 hover:text-ink">Maybe later</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+              </div>
+            </div>
+
+            <!-- Tab bar (Home active) -->
+            <nav class="absolute left-0 right-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-hairline px-2 pt-2 pb-4 z-30">
+              <div class="flex items-stretch justify-around">
+                <button class="relative flex flex-col items-center gap-1 px-3 py-1.5 text-terracotta">
+                  <i data-lucide="house" class="w-[22px] h-[22px]" stroke-width="2"></i>
+                  <span class="text-[10.5px] font-semibold">Home</span>
+                  <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-terracotta pulse-soft"></span>
+                </button>
+                <button onclick="showView('feed')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="book-heart" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Storyhouse</span>
+                </button>
+                <button onclick="showView('events')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="calendar-days" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Events</span>
+                </button>
+                <button onclick="showView('chat')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="message-circle" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Chat</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="user-round" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Profile</span>
+                </button>
+              </div>
+              <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-[100px] h-[4px] rounded-full bg-ink/30"></div>
+            </nav>
+          </section>
+
+          <!-- ============================================================
+               VIEW: EVENTS
+          ============================================================ -->
+          <section id="view-events" class="view">
+            <div class="scroller">
+
+              <header class="sticky top-0 z-30 bg-cream/85 backdrop-blur-md border-b border-hairline/60">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.5" fill="#2D2A26"/><rect x="5" y="5" width="3" height="6" rx="0.5" fill="#2D2A26"/><rect x="10" y="2.5" width="3" height="8.5" rx="0.5" fill="#2D2A26"/><rect x="15" y="0" width="3" height="11" rx="0.5" fill="#2D2A26"/></svg>
+                    <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2.5a8 8 0 0 1 5.5 2.2l-1.4 1.4a6 6 0 0 0-8.2 0L2.5 4.7A8 8 0 0 1 8 2.5Z" fill="#2D2A26"/><path d="M8 5.5a5 5 0 0 1 3.4 1.4l-1.4 1.4a3 3 0 0 0-4 0L4.6 6.9A5 5 0 0 1 8 5.5Z" fill="#2D2A26"/><circle cx="8" cy="9" r="1.3" fill="#2D2A26"/></svg>
+                    <span class="battery"><span></span></span>
+                  </span>
+                </div>
+                <div class="px-5 pt-1 pb-4 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] uppercase tracking-[0.18em] text-mute font-medium">May · Sunday</p>
+                    <h1 class="text-[26px] leading-tight font-semibold tracking-tightish mt-0.5">Events</h1>
+                  </div>
+                  <button class="w-10 h-10 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center shadow-warm">
+                    <i data-lucide="calendar" class="w-[18px] h-[18px]"></i>
+                  </button>
+                </div>
+              </header>
+
+              <div class="px-5 pt-5 pb-32 space-y-7">
+
+                <!-- Coming up -->
+                <section class="fade-in">
+                  <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold mb-3">Coming up</p>
+
+                  <!-- Featured: Sunday call -->
+                  <article class="bg-white rounded-3xl shadow-warm p-4 mb-3.5">
+                    <div class="flex items-center gap-3 mb-4">
+                      <div class="shrink-0 w-12 h-12 rounded-2xl bg-sage-tint flex flex-col items-center justify-center text-[9.5px] font-semibold leading-tight tracking-wider" style="color:#6F8267;">
+                        <span>SUN</span>
+                        <span class="text-[16px] font-bold">14</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[16px] font-semibold leading-tight text-ink">Sunday call with Grandma</p>
+                        <p class="text-[12.5px] text-mute mt-0.5">In 4 hours · 10:00 AM your time</p>
+                      </div>
+                      <button class="w-9 h-9 rounded-full bg-cream-soft text-terracotta-deep flex items-center justify-center">
+                        <i data-lucide="bell" class="w-[16px] h-[16px]"></i>
+                      </button>
+                    </div>
+
+                    <!-- Time strip -->
+                    <div class="rounded-2xl bg-cream-soft p-3.5 mb-4">
+                      <p class="text-[10.5px] uppercase tracking-[0.14em] text-mute font-semibold mb-3">A good time for everyone?</p>
+                      <div class="grid grid-cols-5 gap-1.5">
+                        <div class="text-center">
+                          <div class="av-1 w-8 h-8 rounded-full mx-auto flex items-center justify-center text-white text-[11px] font-semibold">M</div>
+                          <p class="text-[10px] text-mute mt-1.5">Seattle</p>
+                          <p class="text-[12px] font-semibold text-ink mt-0.5">7 AM</p>
+                          <span class="block w-2 h-2 rounded-full mx-auto mt-1.5 ring-2 ring-white" style="background:#E8C9AE;"></span>
+                        </div>
+                        <div class="text-center">
+                          <div class="av-2 w-8 h-8 rounded-full mx-auto flex items-center justify-center text-white text-[11px] font-semibold">D</div>
+                          <p class="text-[10px] text-mute mt-1.5">Boston</p>
+                          <p class="text-[12px] font-semibold text-ink mt-0.5">10 AM</p>
+                          <span class="block w-2 h-2 rounded-full mx-auto mt-1.5 ring-2 ring-white" style="background:#8B9E7E;"></span>
+                        </div>
+                        <div class="text-center">
+                          <div class="av-3 w-8 h-8 rounded-full mx-auto flex items-center justify-center text-white text-[11px] font-semibold">G</div>
+                          <p class="text-[10px] text-mute mt-1.5">Cork</p>
+                          <p class="text-[12px] font-semibold text-ink mt-0.5">3 PM</p>
+                          <span class="block w-2 h-2 rounded-full mx-auto mt-1.5 ring-2 ring-white" style="background:#8B9E7E;"></span>
+                        </div>
+                        <div class="text-center">
+                          <div class="av-4 w-8 h-8 rounded-full mx-auto flex items-center justify-center text-white text-[11px] font-semibold">J</div>
+                          <p class="text-[10px] text-mute mt-1.5">Austin</p>
+                          <p class="text-[12px] font-semibold text-ink mt-0.5">9 AM</p>
+                          <span class="block w-2 h-2 rounded-full mx-auto mt-1.5 ring-2 ring-white" style="background:#8B9E7E;"></span>
+                        </div>
+                        <div class="text-center">
+                          <div class="av-5 w-8 h-8 rounded-full mx-auto flex items-center justify-center text-white text-[11px] font-semibold">S</div>
+                          <p class="text-[10px] text-mute mt-1.5">NYC</p>
+                          <p class="text-[12px] font-semibold text-ink mt-0.5">10 AM</p>
+                          <span class="block w-2 h-2 rounded-full mx-auto mt-1.5 ring-2 ring-white" style="background:#8B9E7E;"></span>
+                        </div>
+                      </div>
+                      <div class="flex items-center justify-center gap-3 mt-3.5 text-[10.5px] text-mute">
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full" style="background:#8B9E7E;"></span>great</span>
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full" style="background:#E8C9AE;"></span>early</span>
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-mute-light"></span>asleep</span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2.5">
+                        <div class="flex -space-x-1.5">
+                          <div class="av-1 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">M</div>
+                          <div class="av-2 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">D</div>
+                          <div class="av-3 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">G</div>
+                          <div class="av-4 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">J</div>
+                          <div class="av-5 w-6 h-6 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">S</div>
+                        </div>
+                        <p class="text-[12.5px] text-ink-soft"><span class="font-medium">All 5</span> said they'd join</p>
+                      </div>
+                      <button class="tap text-[13px] font-semibold text-white bg-terracotta hover:bg-terracotta-deep px-3.5 py-1.5 rounded-full">I'm in</button>
+                    </div>
+                  </article>
+
+                  <!-- Jamie's birthday brunch -->
+                  <article class="tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer mb-2.5">
+                    <div class="flex items-center gap-3">
+                      <div class="shrink-0 w-12 h-12 rounded-2xl bg-terracotta-tint flex flex-col items-center justify-center text-[9.5px] font-semibold leading-tight tracking-wider text-terracotta-deep">
+                        <span>SAT</span>
+                        <span class="text-[16px] font-bold">20</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[15px] font-semibold leading-tight text-ink">Jamie's birthday brunch</p>
+                        <p class="text-[12.5px] text-mute mt-0.5">Sat 11 AM CT · Austin · 3 going</p>
+                        <p class="text-[11px] text-mute-light mt-0.5">Mom & Grandma joining by video</p>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                    </div>
+                  </article>
+
+                  <!-- Memorial weekend -->
+                  <article class="tap bg-white rounded-3xl shadow-warm p-4 cursor-pointer">
+                    <div class="flex items-center gap-3">
+                      <div class="shrink-0 w-12 h-12 rounded-2xl bg-cream-soft flex flex-col items-center justify-center text-[9.5px] font-semibold leading-tight tracking-wider text-mute">
+                        <span>MAY</span>
+                        <span class="text-[16px] font-bold text-ink-soft">27</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[15px] font-semibold leading-tight text-ink">Memorial weekend at the cabin</p>
+                        <p class="text-[12.5px] text-mute mt-0.5">Fri–Mon · 2 weeks away</p>
+                        <p class="text-[11.5px] text-mute-light mt-0.5">2 confirmed · 3 thinking about it</p>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                    </div>
+                  </article>
+                </section>
+
+                <!-- Family rituals -->
+                <section class="fade-in">
+                  <div class="flex items-baseline justify-between mb-1">
+                    <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold">Family rituals</p>
+                  </div>
+                  <p class="text-[12.5px] text-ink-soft mb-3">The things that come back around.</p>
+                  <div class="bg-white rounded-3xl shadow-warm divide-y divide-hairline overflow-hidden">
+                    <div class="tap p-3.5 flex items-center gap-3 cursor-pointer">
+                      <div class="shrink-0 w-10 h-10 rounded-xl bg-sage-tint flex items-center justify-center" style="color:#6F8267;">
+                        <i data-lucide="utensils" class="w-5 h-5"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[14.5px] font-semibold text-ink">Sunday family dinner</p>
+                        <p class="text-[11.5px] text-mute">Every Sunday · 6 PM your time</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-[10px] text-mute uppercase tracking-wider font-semibold">Next</p>
+                        <p class="text-[13px] font-semibold text-ink">Tonight</p>
+                      </div>
+                    </div>
+                    <div class="tap p-3.5 flex items-center gap-3 cursor-pointer">
+                      <div class="shrink-0 w-10 h-10 rounded-xl bg-terracotta-tint flex items-center justify-center text-terracotta-deep">
+                        <i data-lucide="phone" class="w-5 h-5"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[14.5px] font-semibold text-ink">Call with Grandma</p>
+                        <p class="text-[11.5px] text-mute">Sundays · 10 AM · 3 PM her time</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-[10px] text-mute uppercase tracking-wider font-semibold">Today</p>
+                        <p class="text-[13px] font-semibold text-ink">In 4h</p>
+                      </div>
+                    </div>
+                    <div class="tap p-3.5 flex items-center gap-3 cursor-pointer">
+                      <div class="shrink-0 w-10 h-10 rounded-xl bg-sage-tint flex items-center justify-center" style="color:#6F8267;">
+                        <i data-lucide="dices" class="w-5 h-5"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[14.5px] font-semibold text-ink">Family game night</p>
+                        <p class="text-[11.5px] text-mute">Every Thursday · 8 PM your time</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-[10px] text-mute uppercase tracking-wider font-semibold">Next</p>
+                        <p class="text-[13px] font-semibold text-ink">Thu</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Looking back -->
+                <section class="fade-in">
+                  <div class="flex items-baseline justify-between mb-1">
+                    <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold">Looking back</p>
+                  </div>
+                  <p class="text-[12.5px] text-ink-soft mb-3">Past events that grew into memories.</p>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div onclick="showView('feed')" class="tap bg-white rounded-2xl shadow-warm overflow-hidden cursor-pointer">
+                      <div class="photo-warm ph-thanks h-24"></div>
+                      <div class="p-3">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">Thanksgiving '22</p>
+                        <p class="text-[11px] text-mute mt-0.5">12 memories · 8 people</p>
+                      </div>
+                    </div>
+                    <div onclick="showView('feed')" class="tap bg-white rounded-2xl shadow-warm overflow-hidden cursor-pointer">
+                      <div class="photo-warm ph-beach h-24"></div>
+                      <div class="p-3">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">4th of July boat trip</p>
+                        <p class="text-[11px] text-mute mt-0.5">8 memories · 5 people</p>
+                      </div>
+                    </div>
+                    <div onclick="showView('feed')" class="tap bg-white rounded-2xl shadow-warm overflow-hidden cursor-pointer">
+                      <div class="photo-warm ph-dinner h-24"></div>
+                      <div class="p-3">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">Mom's 60th</p>
+                        <p class="text-[11px] text-mute mt-0.5">24 memories · 11 people</p>
+                      </div>
+                    </div>
+                    <div onclick="showView('feed')" class="tap bg-white rounded-2xl shadow-warm overflow-hidden cursor-pointer">
+                      <div class="photo-warm ph-garden h-24"></div>
+                      <div class="p-3">
+                        <p class="text-[13.5px] font-semibold text-ink leading-tight">Spring garden week</p>
+                        <p class="text-[11px] text-mute mt-0.5">6 memories · 3 people</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <!-- FAB: plan something -->
+            <button aria-label="Plan something" class="absolute right-5 bottom-[92px] w-14 h-14 rounded-full bg-terracotta text-white shadow-fab flex items-center justify-center hover:bg-terracotta-deep active:scale-95 transition-all duration-150 z-40">
+              <i data-lucide="calendar-plus" class="w-6 h-6" stroke-width="2.25"></i>
+            </button>
+
+            <!-- Tab bar (Events active) -->
+            <nav class="absolute left-0 right-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-hairline px-2 pt-2 pb-4 z-30">
+              <div class="flex items-stretch justify-around">
+                <button onclick="showView('home')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="house" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Home</span>
+                </button>
+                <button onclick="showView('feed')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="book-heart" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Storyhouse</span>
+                </button>
+                <button class="relative flex flex-col items-center gap-1 px-3 py-1.5 text-terracotta">
+                  <i data-lucide="calendar-days" class="w-[22px] h-[22px]" stroke-width="2"></i>
+                  <span class="text-[10.5px] font-semibold">Events</span>
+                  <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-terracotta pulse-soft"></span>
+                </button>
+                <button onclick="showView('chat')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="message-circle" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Chat</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="user-round" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Profile</span>
+                </button>
+              </div>
+              <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-[100px] h-[4px] rounded-full bg-ink/30"></div>
+            </nav>
+          </section>
+
+          <!-- ============================================================
+               VIEW: CHAT (conversations list)
+          ============================================================ -->
+          <section id="view-chat" class="view">
+            <div class="scroller">
+
+              <header class="sticky top-0 z-30 bg-cream/85 backdrop-blur-md border-b border-hairline/60">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.5" fill="#2D2A26"/><rect x="5" y="5" width="3" height="6" rx="0.5" fill="#2D2A26"/><rect x="10" y="2.5" width="3" height="8.5" rx="0.5" fill="#2D2A26"/><rect x="15" y="0" width="3" height="11" rx="0.5" fill="#2D2A26"/></svg>
+                    <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2.5a8 8 0 0 1 5.5 2.2l-1.4 1.4a6 6 0 0 0-8.2 0L2.5 4.7A8 8 0 0 1 8 2.5Z" fill="#2D2A26"/><path d="M8 5.5a5 5 0 0 1 3.4 1.4l-1.4 1.4a3 3 0 0 0-4 0L4.6 6.9A5 5 0 0 1 8 5.5Z" fill="#2D2A26"/><circle cx="8" cy="9" r="1.3" fill="#2D2A26"/></svg>
+                    <span class="battery"><span></span></span>
+                  </span>
+                </div>
+                <div class="px-5 pt-1 pb-4 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] uppercase tracking-[0.18em] text-mute font-medium">Just the family</p>
+                    <h1 class="text-[26px] leading-tight font-semibold tracking-tightish mt-0.5">Chat</h1>
+                  </div>
+                  <button class="w-10 h-10 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center shadow-warm">
+                    <i data-lucide="search" class="w-[18px] h-[18px]"></i>
+                  </button>
+                </div>
+              </header>
+
+              <div class="px-5 pt-4 pb-32 space-y-2.5">
+
+                <!-- Family group chat - featured -->
+                <article onclick="openThread()" class="tap fade-in bg-white rounded-3xl shadow-warm p-4 cursor-pointer">
+                  <div class="flex items-start gap-3">
+                    <div class="relative shrink-0 w-12 h-12">
+                      <div class="av-1 absolute top-0 left-0 w-7 h-7 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">M</div>
+                      <div class="av-2 absolute top-0 right-0 w-7 h-7 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">D</div>
+                      <div class="av-3 absolute bottom-0 left-0.5 w-7 h-7 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">G</div>
+                      <div class="av-4 absolute bottom-0 right-0.5 w-7 h-7 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-semibold">J</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-baseline justify-between">
+                        <p class="text-[15px] font-semibold text-ink">The Pierce family</p>
+                        <p class="text-[11.5px] text-mute">just now</p>
+                      </div>
+                      <p class="text-[13px] text-ink-soft truncate mt-0.5"><span class="font-medium">Jamie:</span> Already missing last week's dinner 💛</p>
+                      <div class="flex items-center justify-between mt-1.5">
+                        <p class="text-[11px] text-mute">5 members · 3 awake</p>
+                        <span class="px-2 py-0.5 rounded-full bg-terracotta text-white text-[10.5px] font-semibold">2 new</span>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <p class="text-[11px] uppercase tracking-[0.16em] text-mute font-semibold pt-3 pb-1">One-on-ones</p>
+
+                <!-- Mom -->
+                <article class="tap fade-in bg-white rounded-2xl shadow-warm p-3.5 cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                      <div class="av-1 w-11 h-11 rounded-full flex items-center justify-center text-white text-[13px] font-semibold">M</div>
+                      <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-mute-light"></span>
+                      </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-baseline justify-between">
+                        <p class="text-[14.5px] font-semibold text-ink">Mom</p>
+                        <p class="text-[11px] text-mute">3h</p>
+                      </div>
+                      <p class="text-[13px] text-ink-soft truncate mt-0.5">She did wonderful. Tell her I said so.</p>
+                      <p class="text-[10.5px] text-mute-light mt-0.5">6:42 AM in Seattle · asleep</p>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Dad -->
+                <article class="tap fade-in bg-white rounded-2xl shadow-warm p-3.5 cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                      <div class="av-2 w-11 h-11 rounded-full flex items-center justify-center text-white text-[13px] font-semibold">D</div>
+                      <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full" style="background:#8B9E7E;"></span>
+                      </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-baseline justify-between">
+                        <p class="text-[14.5px] font-semibold text-ink">Dad</p>
+                        <p class="text-[11px] text-mute">Yesterday</p>
+                      </div>
+                      <p class="text-[13px] text-ink-soft truncate mt-0.5">Did you see the score? 😅</p>
+                      <p class="text-[10.5px] text-mute-light mt-0.5">9:42 AM in Boston · morning</p>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Grandma -->
+                <article class="tap fade-in bg-white rounded-2xl shadow-warm p-3.5 cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                      <div class="av-3 w-11 h-11 rounded-full flex items-center justify-center text-white text-[13px] font-semibold">G</div>
+                      <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-terracotta"></span>
+                      </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-baseline justify-between">
+                        <p class="text-[14.5px] font-semibold text-ink">Grandma Ruth</p>
+                        <p class="text-[11px] text-mute">2d</p>
+                      </div>
+                      <p class="text-[13px] text-ink-soft truncate mt-0.5 inline-flex items-center gap-1.5">
+                        <i data-lucide="mic" class="w-3 h-3"></i>
+                        Voice note · 0:38
+                      </p>
+                      <p class="text-[10.5px] text-mute-light mt-0.5">2:42 PM in Cork · afternoon</p>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Jamie -->
+                <article class="tap fade-in bg-white rounded-2xl shadow-warm p-3.5 cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                      <div class="av-4 w-11 h-11 rounded-full flex items-center justify-center text-white text-[13px] font-semibold">J</div>
+                      <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full" style="background:#8B9E7E;"></span>
+                      </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-baseline justify-between">
+                        <p class="text-[14.5px] font-semibold text-ink">Jamie</p>
+                        <p class="text-[11px] text-mute">Last week</p>
+                      </div>
+                      <p class="text-[13px] text-ink-soft truncate mt-0.5">Send me that photo when you can</p>
+                      <p class="text-[10.5px] text-mute-light mt-0.5">8:42 AM in Austin · morning</p>
+                    </div>
+                  </div>
+                </article>
+
+                <p class="text-center text-[12px] text-mute pt-4 pb-2 italic">No typing dots. No read receipts. Reply when you can.</p>
+              </div>
+            </div>
+
+            <!-- FAB: new message -->
+            <button aria-label="New message" class="absolute right-5 bottom-[92px] w-14 h-14 rounded-full bg-terracotta text-white shadow-fab flex items-center justify-center hover:bg-terracotta-deep active:scale-95 transition-all duration-150 z-40">
+              <i data-lucide="pen-line" class="w-6 h-6" stroke-width="2.25"></i>
+            </button>
+
+            <!-- Tab bar (Chat active) -->
+            <nav class="absolute left-0 right-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-hairline px-2 pt-2 pb-4 z-30">
+              <div class="flex items-stretch justify-around">
+                <button onclick="showView('home')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="house" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Home</span>
+                </button>
+                <button onclick="showView('feed')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="book-heart" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Storyhouse</span>
+                </button>
+                <button onclick="showView('events')" class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="calendar-days" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Events</span>
+                </button>
+                <button class="relative flex flex-col items-center gap-1 px-3 py-1.5 text-terracotta">
+                  <i data-lucide="message-circle" class="w-[22px] h-[22px]" stroke-width="2"></i>
+                  <span class="text-[10.5px] font-semibold">Chat</span>
+                  <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-terracotta pulse-soft"></span>
+                </button>
+                <button class="flex flex-col items-center gap-1 px-3 py-1.5 text-mute hover:text-ink-soft transition-colors">
+                  <i data-lucide="user-round" class="w-[22px] h-[22px]" stroke-width="1.75"></i>
+                  <span class="text-[10.5px] font-medium">Profile</span>
+                </button>
+              </div>
+              <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-[100px] h-[4px] rounded-full bg-ink/30"></div>
+            </nav>
+          </section>
+
+          <!-- ============================================================
+               VIEW: CHAT THREAD (family group chat opened)
+          ============================================================ -->
+          <section id="view-thread" class="view">
+            <div class="scroller">
+
+              <header class="sticky top-0 z-30 bg-cream/90 backdrop-blur-md border-b border-hairline/60">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.5" fill="#2D2A26"/><rect x="5" y="5" width="3" height="6" rx="0.5" fill="#2D2A26"/><rect x="10" y="2.5" width="3" height="8.5" rx="0.5" fill="#2D2A26"/><rect x="15" y="0" width="3" height="11" rx="0.5" fill="#2D2A26"/></svg>
+                    <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2.5a8 8 0 0 1 5.5 2.2l-1.4 1.4a6 6 0 0 0-8.2 0L2.5 4.7A8 8 0 0 1 8 2.5Z" fill="#2D2A26"/><path d="M8 5.5a5 5 0 0 1 3.4 1.4l-1.4 1.4a3 3 0 0 0-4 0L4.6 6.9A5 5 0 0 1 8 5.5Z" fill="#2D2A26"/><circle cx="8" cy="9" r="1.3" fill="#2D2A26"/></svg>
+                    <span class="battery"><span></span></span>
+                  </span>
+                </div>
+                <div class="px-5 pt-1 pb-3 flex items-center gap-3">
+                  <button onclick="closeThread()" class="w-9 h-9 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center transition-colors shadow-warm">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                  </button>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[15px] font-semibold text-ink leading-tight">The Pierce family</p>
+                    <p class="text-[11px] text-mute leading-tight mt-0.5">5 members · 3 awake right now</p>
+                  </div>
+                  <button class="w-9 h-9 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center shadow-warm">
+                    <i data-lucide="phone" class="w-[16px] h-[16px]"></i>
+                  </button>
+                  <button class="w-9 h-9 rounded-full bg-white/70 hover:bg-white text-ink-soft flex items-center justify-center shadow-warm">
+                    <i data-lucide="info" class="w-[16px] h-[16px]"></i>
+                  </button>
+                </div>
+              </header>
+
+              <div class="px-4 pt-5 pb-24 cascade">
+
+                <!-- Day divider -->
+                <div class="text-center mb-3">
+                  <p class="text-[10.5px] uppercase tracking-[0.16em] text-mute font-semibold">Sunday morning</p>
+                </div>
+
+                <!-- Mom -->
+                <div class="flex gap-2 items-end mb-2">
+                  <div class="av-1 shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10.5px] font-semibold">M</div>
+                  <div class="max-w-[78%]">
+                    <p class="text-[10.5px] text-mute mb-1 ml-1">Mom · 6:32 AM her time</p>
+                    <div class="bg-white rounded-2xl rounded-bl-md px-4 py-2.5 shadow-warm">
+                      <p class="text-[14px] text-ink leading-relaxed">Coffee's on. Anyone joining the call early?</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dad photo with make-memory affordance -->
+                <div class="flex gap-2 items-end mb-2">
+                  <div class="av-2 shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10.5px] font-semibold">D</div>
+                  <div class="max-w-[80%]">
+                    <p class="text-[10.5px] text-mute mb-1 ml-1">Dad · just now</p>
+                    <div class="bg-white rounded-2xl rounded-bl-md p-1.5 shadow-warm">
+                      <div class="photo-warm ph-sunset rounded-xl w-52 aspect-[4/3]"></div>
+                      <button class="w-full mt-1.5 px-3 py-1.5 rounded-lg bg-terracotta-tint hover:bg-terracotta-soft text-terracotta-deep text-[11.5px] font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                        <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i>
+                        Make this a memory
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Grandma voice -->
+                <div class="flex gap-2 items-end mb-3">
+                  <div class="av-3 shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10.5px] font-semibold">G</div>
+                  <div class="max-w-[80%]">
+                    <p class="text-[10.5px] text-mute mb-1 ml-1">Grandma · 3:01 PM her time</p>
+                    <div class="bg-white rounded-2xl rounded-bl-md px-3 py-2.5 shadow-warm">
+                      <div class="flex items-center gap-2.5">
+                        <button class="shrink-0 w-9 h-9 rounded-full bg-terracotta text-white flex items-center justify-center shadow-warm hover:bg-terracotta-deep transition-colors">
+                          <i data-lucide="play" class="w-[14px] h-[14px]" fill="currentColor"></i>
+                        </button>
+                        <div class="flex-1 flex items-center gap-[2px] h-6">
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:40%; animation-delay:0s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:65%; animation-delay:0.1s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:85%; animation-delay:0.2s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:55%; animation-delay:0.3s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:75%; animation-delay:0.4s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:90%; animation-delay:0.5s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:60%; animation-delay:0.6s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:80%; animation-delay:0.7s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:50%; animation-delay:0.8s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:70%; animation-delay:0.9s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:45%; animation-delay:1.0s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:65%; animation-delay:1.1s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:55%; animation-delay:1.2s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:75%; animation-delay:1.3s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:40%; animation-delay:1.4s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:60%; animation-delay:1.5s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:50%; animation-delay:1.6s;"></div>
+                          <div class="wave-bar w-[2.5px] rounded-full bg-terracotta-soft" style="height:35%; animation-delay:1.7s;"></div>
+                        </div>
+                        <p class="text-[10.5px] font-mono text-mute">0:38</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Day divider -->
+                <div class="text-center my-3">
+                  <p class="text-[10.5px] uppercase tracking-[0.16em] text-mute font-semibold">A little later</p>
+                </div>
+
+                <!-- Me (right) -->
+                <div class="flex justify-end mb-2">
+                  <div class="max-w-[78%]">
+                    <div class="bg-terracotta text-white rounded-2xl rounded-br-md px-4 py-2.5 shadow-warm">
+                      <p class="text-[14px] leading-relaxed">Be there at 10! Coffee here too ☕</p>
+                    </div>
+                    <p class="text-[10px] text-mute mt-1 mr-1 text-right">Sent · seen by 3</p>
+                  </div>
+                </div>
+
+                <!-- Jamie -->
+                <div class="flex gap-2 items-end mb-2">
+                  <div class="av-4 shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10.5px] font-semibold">J</div>
+                  <div class="max-w-[78%]">
+                    <p class="text-[10.5px] text-mute mb-1 ml-1">Jamie · just now</p>
+                    <div class="bg-white rounded-2xl rounded-bl-md px-4 py-2.5 shadow-warm">
+                      <p class="text-[14px] text-ink leading-relaxed">Already missing last week's dinner. Can we do another soon? 💛</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Soft presence note -->
+                <div class="text-center mt-4 mb-1">
+                  <p class="text-[11px] text-mute-light italic">Grandma checked in 12 minutes ago</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message input bar -->
+            <div class="absolute left-0 right-0 bottom-0 bg-cream/95 backdrop-blur-md border-t border-hairline px-3 py-2.5 z-30">
+              <div class="flex items-center gap-2">
+                <button class="shrink-0 w-9 h-9 rounded-full bg-white hover:bg-cream-soft text-ink-soft flex items-center justify-center shadow-warm">
+                  <i data-lucide="plus" class="w-[18px] h-[18px]"></i>
+                </button>
+                <input placeholder="Say something..." class="flex-1 bg-white rounded-full px-4 py-2 text-[14px] text-ink placeholder:text-mute-light outline-none shadow-warm">
+                <button class="shrink-0 w-9 h-9 rounded-full bg-terracotta text-white flex items-center justify-center shadow-warm hover:bg-terracotta-deep">
+                  <i data-lucide="mic" class="w-[18px] h-[18px]"></i>
+                </button>
+              </div>
+              <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-[100px] h-[4px] rounded-full bg-ink/30"></div>
+            </div>
+          </section>
+
+          <!-- ============================================================
+               ADD MEMORY BOTTOM SHEET
+          ============================================================ -->
+          <div id="add-sheet-wrap" class="hidden absolute inset-0 z-50">
+            <div onclick="closeAddSheet()" class="absolute inset-0 bg-ink/35 backdrop-blur-[2px] backdrop-in"></div>
+
+            <div id="add-sheet" class="absolute left-0 right-0 bottom-0 bg-cream rounded-t-[28px] shadow-warm-lg sheet-in max-h-[88%] overflow-y-auto scroll-hidden">
+
+              <div class="flex justify-center pt-3 pb-1">
+                <div class="w-10 h-1 rounded-full bg-hairline"></div>
+              </div>
+
+              <!-- STEP 1 -->
+              <div id="add-step-1" class="px-5 pt-3 pb-8">
+                <div class="flex items-center justify-between mb-1.5">
+                  <h2 class="text-[20px] font-semibold tracking-tightish">What's on your mind?</h2>
+                  <button onclick="closeAddSheet()" class="w-8 h-8 rounded-full hover:bg-cream-soft text-mute flex items-center justify-center">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+                </div>
+                <p class="text-[14px] text-ink-soft mb-4">Share something with the family.</p>
+
+                <div class="flex p-1 rounded-2xl bg-cream-soft mb-5">
+                  <button onclick="setMode('new')" id="mode-new-btn" class="flex-1 py-2 rounded-xl text-[13px] font-semibold bg-white text-ink shadow-warm transition-all">
+                    Start a new memory
+                  </button>
+                  <button onclick="setMode('existing')" id="mode-exist-btn" class="flex-1 py-2 rounded-xl text-[13px] font-medium text-mute transition-all">
+                    Add to existing
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <button onclick="goToStep2()" class="tap rounded-2xl bg-white shadow-warm p-4 text-left">
+                    <div class="w-10 h-10 rounded-xl bg-terracotta-tint text-terracotta-deep flex items-center justify-center mb-3">
+                      <i data-lucide="camera" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-[14.5px] font-semibold text-ink">Photo or video</p>
+                    <p class="text-[12px] text-mute mt-0.5 leading-snug">Capture or pick from your library.</p>
+                  </button>
+                  <button onclick="goToStep2()" class="tap rounded-2xl bg-white shadow-warm p-4 text-left">
+                    <div class="w-10 h-10 rounded-xl bg-sage-tint flex items-center justify-center mb-3" style="color:#6F8267;">
+                      <i data-lucide="mic" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-[14.5px] font-semibold text-ink">Voice note</p>
+                    <p class="text-[12px] text-mute mt-0.5 leading-snug">Say it the way you'd tell them.</p>
+                  </button>
+                  <button onclick="goToStep2()" class="tap rounded-2xl bg-white shadow-warm p-4 text-left">
+                    <div class="w-10 h-10 rounded-xl bg-terracotta-tint text-terracotta-deep flex items-center justify-center mb-3">
+                      <i data-lucide="feather" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-[14.5px] font-semibold text-ink">Written story</p>
+                    <p class="text-[12px] text-mute mt-0.5 leading-snug">A paragraph, a page — whatever fits.</p>
+                  </button>
+                  <button onclick="goToStep2()" class="tap rounded-2xl bg-white shadow-warm p-4 text-left">
+                    <div class="w-10 h-10 rounded-xl bg-sage-tint flex items-center justify-center mb-3" style="color:#6F8267;">
+                      <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-[14.5px] font-semibold text-ink">Quick update</p>
+                    <p class="text-[12px] text-mute mt-0.5 leading-snug">A line or two. Nothing fancy.</p>
+                  </button>
+                </div>
+              </div>
+
+              <!-- STEP 2 -->
+              <div id="add-step-2" class="hidden px-5 pt-3 pb-8">
+                <div class="flex items-center justify-between mb-4">
+                  <button onclick="backToStep1()" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-ink-soft hover:text-ink">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    Back
+                  </button>
+                  <button onclick="closeAddSheet()" class="w-8 h-8 rounded-full hover:bg-cream-soft text-mute flex items-center justify-center">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+                </div>
+
+                <h2 class="text-[20px] font-semibold tracking-tightish mb-1">Share a memory</h2>
+                <p class="text-[14px] text-ink-soft mb-5">Take your time. No rush.</p>
+
+                <div class="dashed-warm rounded-2xl bg-white/60 p-6 mb-4 text-center cursor-pointer tap">
+                  <div class="w-12 h-12 rounded-2xl bg-terracotta-tint text-terracotta-deep mx-auto flex items-center justify-center mb-2.5">
+                    <i data-lucide="image" class="w-6 h-6"></i>
+                  </div>
+                  <p class="text-[14px] font-semibold text-ink">Tap to add a photo or video</p>
+                  <p class="text-[12.5px] text-mute mt-1">Or drag one in from your library</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-warm p-4 mb-4">
+                  <textarea placeholder="What's the story behind this moment?"
+                    class="w-full resize-none border-0 outline-none text-[15px] leading-relaxed text-ink placeholder:text-mute-light bg-transparent" rows="4"></textarea>
+                </div>
+
+                <button class="w-full flex items-center justify-between bg-white rounded-2xl shadow-warm px-4 py-3.5 mb-3 tap">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-cream-soft flex items-center justify-center text-mute">
+                      <i data-lucide="users" class="w-[18px] h-[18px]"></i>
+                    </div>
+                    <div class="text-left">
+                      <p class="text-[14px] font-semibold text-ink">Who was there?</p>
+                      <p class="text-[12px] text-mute">Tag the family members in this moment.</p>
+                    </div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                </button>
+
+                <button class="w-full flex items-center justify-between bg-white rounded-2xl shadow-warm px-4 py-3.5 mb-6 tap">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-cream-soft flex items-center justify-center text-mute">
+                      <i data-lucide="calendar" class="w-[18px] h-[18px]"></i>
+                    </div>
+                    <div class="text-left">
+                      <p class="text-[14px] font-semibold text-ink">When was this?</p>
+                      <p class="text-[12px] text-mute">Pin it to a date or event.</p>
+                    </div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-mute"></i>
+                </button>
+
+                <button class="tap w-full rounded-2xl bg-terracotta text-white py-4 flex items-center justify-center gap-2 font-semibold text-[15.5px] shadow-fab hover:bg-terracotta-deep">
+                  <i data-lucide="heart" class="w-[18px] h-[18px]" stroke-width="2.25"></i>
+                  Share with the family
+                </button>
+                <p class="text-center text-[12px] text-mute mt-2.5">Only your family sees this. Always.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /screen -->
+      </div>
+      <!-- /device -->
+    </div>
+    <!-- /device-wrap -->
+  </div>
+
+  <script>
+    // ===== View navigation =====
+    function showView(name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const v = document.getElementById('view-' + name);
+      v.classList.add('active');
+      const sc = v.querySelector('.scroller');
+      if (sc) sc.scrollTop = 0;
+      observeFades();
+    }
+    function openDetail() { showView('detail'); }
+    function closeDetail() { showView('feed'); }
+    function openThread() { showView('thread'); }
+    function closeThread() { showView('chat'); }
+
+    // ===== Add sheet =====
+    function openAddSheet() {
+      document.getElementById('add-sheet-wrap').classList.remove('hidden');
+      document.getElementById('add-step-1').classList.remove('hidden');
+      document.getElementById('add-step-2').classList.add('hidden');
+      lucide.createIcons();
+    }
+    function closeAddSheet() {
+      document.getElementById('add-sheet-wrap').classList.add('hidden');
+    }
+    function goToStep2() {
+      document.getElementById('add-step-1').classList.add('hidden');
+      document.getElementById('add-step-2').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function backToStep1() {
+      document.getElementById('add-step-2').classList.add('hidden');
+      document.getElementById('add-step-1').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function setMode(mode) {
+      const a = document.getElementById('mode-new-btn');
+      const b = document.getElementById('mode-exist-btn');
+      const active = 'flex-1 py-2 rounded-xl text-[13px] font-semibold bg-white text-ink shadow-warm transition-all';
+      const idle   = 'flex-1 py-2 rounded-xl text-[13px] font-medium text-mute transition-all';
+      if (mode === 'new') { a.className = active; b.className = idle; }
+      else { b.className = active; a.className = idle; }
+    }
+
+    function dismissNudge() {
+      const n = document.getElementById('nudge');
+      n.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      n.style.opacity = '0';
+      n.style.transform = 'scale(0.98)';
+      setTimeout(() => { n.style.display = 'none'; }, 320);
+    }
+
+    // ===== Fade-in observer (scoped to each scroller) =====
+    let io;
+    function observeFades() {
+      if (io) io.disconnect();
+      const active = document.querySelector('.view.active .scroller');
+      if (!active) return;
+      io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      }, { root: active, threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+      active.querySelectorAll('.fade-in:not(.in)').forEach(el => io.observe(el));
+    }
+
+    // ===== Auto-scale device to fit viewport =====
+    function fitDevice() {
+      const wrap = document.getElementById('device-wrap');
+      const deviceW = 410;
+      const deviceH = 838;
+      const padding = 32;
+      const scaleW = (window.innerWidth - padding) / deviceW;
+      const scaleH = (window.innerHeight - padding) / deviceH;
+      const scale = Math.min(1.05, scaleW, scaleH);
+      wrap.style.transform = `scale(${scale})`;
+    }
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fitDevice();
+      observeFades();
+    });
+    window.addEventListener('resize', fitDevice);
+    setTimeout(() => lucide.createIcons(), 50);
+  </script>
+</body>
+</html>
